@@ -63,6 +63,54 @@ const loginUser = async (req, res) => {
     }
 };
 
+// Update user Profile
+const updateUserProfile = async (req, res) => {
+    try{
+        const user = await User.findById(req.user.id);
+
+        if(user){
+            user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            user.phone = req.body.phone || user.phone;
+            user.city = req.body.city || user.city;
+
+            if(req.body.password){
+                user.password = req.body.password;
+            }
+
+            const updatedUser = await user.save();
+
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                city: updatedUser.city,
+                role: updatedUser.role,
+            });
+        }else{
+            res.status(404).json({message: 'User not found'});
+        }
+    }catch(error){
+        res.status(500).json({message: error.message});
+    }
+}
+
+//Delete user
+const deleteUser = async (req, res) => {
+    try{
+        const user = await User.findById(req.params.id);
+
+        if(user){
+            await User.findByIdAndDelete(req.params.id);
+            res.json({message: 'user deleted sucessfully'})
+        }else{
+            res.status(404).json({message: 'User not found'});
+        }
+    }catch (error){
+        res.status(500).json({message: error.message});
+    }
+}
+
 // Get all users (admin only)
 const getUsers = async (req, res) => {
     try {
@@ -80,4 +128,4 @@ const generateToken = (id) => {
     });
 };
 
-module.exports = { registerUser, loginUser, getUsers };
+module.exports = { registerUser, loginUser, getUsers, updateUserProfile, deleteUser };
