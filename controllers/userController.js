@@ -1,34 +1,83 @@
 const User = require('../models/userModel');
-const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-// Register new user 
+// Register new user
 const registerUser = async (req, res) => {
-    const {name, email, phone, city, password, confirmPassword, role} = req.body;
+    const { name, email, phone, city, password, confirmPassword, role } = req.body;
 
-    if (password !== confirmPassword){
-        return res.status(400).json({message: 'Password do not match'});
+    if (password !== confirmPassword) {
+        return res.status(400).json({ message: 'Passwords do not match' });
     }
 
     try {
-        const UserExists = await User.findOne({email});
-
-        if(UserExists){
-            return res.status(400).json({message: 'User already exist'});
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
         }
-         const user = newUser({
+
+        const user = new User({
             name,
             email,
             phone,
             city,
             password,
-            role: role || 'user' // Default to 'user' is role is not provided
+            role: role || 'user',
         });
 
         await user.save();
-        res.status(201).json({message: 'User registered Sucessfully'});
-    }catch (error) {
-        res.status(500).json({message: 'Server error'});
-    };
+
+        res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id),
+        });
+        // res.status(201).json({message: 'User Created Sucessfully'});
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
 };
 
-module.exports = {registerUser};
+// Login user
+const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (user && (await user.matchPassword(password))) {
+            res.json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                token: generateToken(user._id),
+            });
+            // res.status(200).json({message: 'Login sucessful'})
+        } else {
+            res.status(401).json({ message: 'Invalid email or password' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Get all users (admin only)
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// JWT token generation
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d',
+    });
+};
+
+module.exports = { registerUser, loginUser, getUsers };
