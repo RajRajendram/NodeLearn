@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema({
         emun: ['admin', 'user'],
         default: 'user',
     },
+    resetOtp: {
+        type: String //OTP field
+    },
+    resetOtpExpires: {
+        type: Date //OTP Expire field
+    }
 }, {
     timestamps: true, //Client side time it will save the date and the at the time of creation 
 });  

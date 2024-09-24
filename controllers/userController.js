@@ -1,5 +1,64 @@
+const crypto = require('crypto');
 const User = require('../models/userModel');
+const sendEmail = require('../utils/emailService');
 const jwt = require('jsonwebtoken');
+
+//Request OTP for password Reset
+const requestPasswordRest = async (req, res) => {
+    const {email} = req.body;
+
+    try{
+        const user = await User.findOne({email});
+
+        if(!user){
+            return res.status(404).json({message: 'User not found'});
+        }
+
+        //Generate a random OTP (6 digit)
+        const otp = crypto.randomInt(100000, 999999).toString();
+
+        //Save OTP and expiration time in the user's record
+        user.resetOtp = otp;
+        user.resetOtpExpires = Date.now()+ 10*60*1000 //OTP Valid for 10 minutes
+        await user.save();
+
+        // Send the OTP via email
+        const message = `Your password reset OTP is: ${otp}. Its is valid for 10 minutes`;
+        await sendEmail(user.email, 'Password Reset OTP', message);
+
+        res.status(200).json({message: 'OTP sent to your email'});
+    }catch(error){
+        res.status(500).json({message: 'Error sending OTP, Please try again later'});
+    }
+};
+
+// Verfy OTP
+const verifyOtp = async (req,res) => {
+    const {email, otp} = req.body;
+
+    try{
+        const user = await User.findOne({email});
+
+        if(!user || !user.resetOtp || !user.resetOtpExpires <Date.now()){
+            return res.status(400).json({message: 'OTP IS INVALID OR HAS EXPIRED'})
+        }
+
+        if(user.resetOtp !== otp){
+            return res.status(400).json({message: 'Incorrect OTP'});
+        }
+
+        // OTP is valid, clear the restOtp fields and allow password reset 
+        user.resetOtp = undefined;
+        user.resetOtpExpires = undefined;
+        await user.save();
+
+        res.status(200).json({message: 'OTP Verified sucessfully'});
+    }catch(error){
+        res.status(500).json({message: 'Error verifying OTP'});
+    }
+};
+
+//Rest Password
 
 // Register new user
 const registerUser = async (req, res) => {
@@ -121,6 +180,15 @@ const getUsers = async (req, res) => {
     }
 };
 
+// Logout Controller Function, Array Function
+const logoutUser = (req, res) => {
+    //Clear the cookie if you are using cookies to store JWT
+    res.cookie('jwt', '', {
+        expires: new Date(0), //Expire the cookie immediately
+    });
+    res.status(200).json({message: 'User logged out sucessfully'});
+}
+
 // JWT token generation
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -128,4 +196,4 @@ const generateToken = (id) => {
     });
 };
 
-module.exports = { registerUser, loginUser, getUsers, updateUserProfile, deleteUser };
+module.exports = { registerUser, loginUser, getUsers, updateUserProfile, deleteUser, logoutUser };
