@@ -1,10 +1,11 @@
 const crypto = require('crypto');
 const User = require('../models/userModel');
 const sendEmail = require('../utils/emailService');
+const {validatePassword} = require('../utils/validators');
 const jwt = require('jsonwebtoken');
 
 //Request OTP for password Reset
-const requestPasswordRest = async (req, res) => {
+const requestPasswordReset = async (req, res) => {
     const {email} = req.body;
 
     try{
@@ -19,7 +20,9 @@ const requestPasswordRest = async (req, res) => {
 
         //Save OTP and expiration time in the user's record
         user.resetOtp = otp;
-        user.resetOtpExpires = Date.now()+ 10*60*1000 //OTP Valid for 10 minutes
+        user.resetOtpExpires = Date.now()+ 10*60*1000; //OTP Valid for 10 minutes
+        console.log(user.resetOtpExpires);
+        console.log(Date.now());
         await user.save();
 
         // Send the OTP via email
@@ -39,7 +42,7 @@ const verifyOtp = async (req,res) => {
     try{
         const user = await User.findOne({email});
 
-        if(!user || !user.resetOtp || !user.resetOtpExpires <Date.now()){
+        if(!user || !user.resetOtp || new Date(user.resetOtpExpires).getTime() < Date.now()){
             return res.status(400).json({message: 'OTP IS INVALID OR HAS EXPIRED'})
         }
 
@@ -59,6 +62,25 @@ const verifyOtp = async (req,res) => {
 };
 
 //Rest Password
+const resetPassword = async (req, res) => {
+    const {email, newPassword} = req.body;
+
+    try{
+        const user = await User.findOne({email});
+
+        if(!user){
+            return res.status(404).json({message: 'User not found'});
+        };
+
+        //Update user password
+        user.password = newPassword; //password will be hashcoded pre-save hook
+        await user.save();
+
+        res.status(200).json({message: 'Password reset sucessfully'});
+    }catch (error){
+        res.status(500).json({message: 'Error resetting password'});
+    };
+};
 
 // Register new user
 const registerUser = async (req, res) => {
@@ -66,6 +88,12 @@ const registerUser = async (req, res) => {
 
     if (password !== confirmPassword) {
         return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    //Validate password using the new criteria
+    const {valid, message} = validatePassword(password);
+    if(!valid){
+        return res.status(400).json({message});
     }
 
     try {
@@ -196,4 +224,4 @@ const generateToken = (id) => {
     });
 };
 
-module.exports = { registerUser, loginUser, getUsers, updateUserProfile, deleteUser, logoutUser };
+module.exports = { registerUser, loginUser, getUsers, updateUserProfile, deleteUser, logoutUser, requestPasswordReset, verifyOtp, resetPassword };

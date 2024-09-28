@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, getUsers, updateUserProfile, deleteUser, logoutUser } = require('../controllers/userController'); // Import controllers
+const { registerUser, loginUser, getUsers, updateUserProfile, deleteUser, logoutUser, requestPasswordReset, verifyOtp,resetPassword } = require('../controllers/userController'); // Import controllers
 const { protect, admin } = require('../middleware/auth'); // Import middleware
 const router = express.Router();
 
@@ -20,5 +20,14 @@ router.get('/', protect, admin, getUsers);
 
 //Logout user
 router.post('/logout', protect, logoutUser);
+
+//Route to request otp for the password reset
+router.post('/forgot-password', requestPasswordReset);
+
+//Route to verify OTP
+router.post('/verify-otp', verifyOtp);
+
+//Route to reset password
+router.post('/reset-password', resetPassword);
 
 module.exports = router;
