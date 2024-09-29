@@ -43,7 +43,9 @@ const validatePassword = (password) => {
     }
 
     // If all checks pass, return valid
-    return { valid: true };
+    return { valid: true,
+            message: 'Password is strong'
+     };
 }
 
 module.exports = { validatePassword };

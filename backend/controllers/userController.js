@@ -1,8 +1,12 @@
 const crypto = require('crypto');
 const User = require('../models/userModel');
 const sendEmail = require('../utils/emailService');
-const { validatePassword } = require('../utils/validators');
-const jwt = require('jsonwebtoken');
+const { validatePassword } = require('../utils/validators'); 
+// ../ Is used to go back to the master foler to 
+// check where the program file is situated, Utils is the folder where we have kept all the 
+// utilities files and we can select the spection file for the function execution, 
+// Note: If we dont import this this file it will not work for the PasswordValidatior function.
+ const jwt = require('jsonwebtoken');
 
 // JWT token generation
 const generateToken = (id) => {
@@ -48,6 +52,7 @@ const registerUser = async (req, res) => {
             email: user.email,
             role: user.role,
             token: generateToken(user._id),
+            message: 'Password is strong and user created sucessfully'
         });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
