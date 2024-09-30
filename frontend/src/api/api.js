@@ -7,3 +7,17 @@ const axiosInstance = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+
+// Interceptor for handling error globally (Optional)
+axiosInstance.interceptors.response.use(
+    response => response,
+    error => {
+        if(error.response.status === 401){
+            // Handle unauthorized request (Eg: token expiration)
+        }
+        return Promise.reject(error);
+    }
+);
+
+export default axiosInstance;
