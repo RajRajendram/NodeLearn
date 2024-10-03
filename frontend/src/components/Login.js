@@ -1,10 +1,8 @@
 import React from 'react'
 import { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const Login = () =>{
-  const navigate = useNavigate();
   const {login} = useContext(AuthContext);
   const [email, setEmail] =useState('');
   const [password, setPassword] = useState('');
@@ -12,7 +10,6 @@ const Login = () =>{
   const handleSumit = async(e) => {
     e.preventDefault();
     await login(email, password);
-    navigate('/admin');
   }
 
   return (

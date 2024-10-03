@@ -6,16 +6,16 @@ import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <AuthProvider>
     <Router>
-    <Routes>
-      <Route path='/login' element={<Login/>} />
-      <Route path='/register' element={<Register/>} />
-      <Route path='/admin' />
-      <Route path='/user' />
-    </Routes>
+      <AuthProvider> {/* Moved AuthProvider inside Router */}
+        <Routes>
+          <Route path='/login' element={<Login/>} />
+          <Route path='/register' element={<Register/>} />
+          <Route path='/admin' />
+          <Route path='/user' />
+        </Routes>
+      </AuthProvider>
     </Router>
-    </AuthProvider>
   );
 }
 
